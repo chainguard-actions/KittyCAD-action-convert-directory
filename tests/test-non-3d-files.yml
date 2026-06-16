@@ -1,0 +1,40 @@
+name: Test convert directory with non-3D files
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create input directory with non-3D files
+        run: |
+          mkdir -p /tmp/test-input-noncad
+          echo "hello" > /tmp/test-input-noncad/readme.txt
+          echo "data" > /tmp/test-input-noncad/data.csv
+
+      - id: action
+        uses: .
+        with:
+          kittycad-token: dummy-token-no-conversion
+          input-directory: /tmp/test-input-noncad
+          output-directory: /tmp/test-output-noncad
+          conversion-type: obj
+
+      - name: Assert output directory was created
+        run: |
+          if [ ! -d "/tmp/test-output-noncad" ]; then
+            echo "FAIL: output directory /tmp/test-output-noncad was not created"
+            exit 1
+          fi
+          echo "PASS: output directory exists"
+
+      - name: Assert no converted files in output (non-3D inputs are ignored)
+        run: |
+          COUNT=$(find /tmp/test-output-noncad -type f | wc -l)
+          echo "Files in output directory: $COUNT"
+          if [ "$COUNT" -ne 0 ]; then
+            echo "FAIL: expected 0 converted files, got $COUNT"
+            exit 1
+          fi
+          echo "PASS: no files converted as expected"

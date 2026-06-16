@@ -1,0 +1,37 @@
+name: Test convert empty directory
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create empty input directory
+        run: mkdir -p /tmp/test-input
+
+      - id: action
+        uses: .
+        with:
+          kittycad-token: dummy-token-for-empty-dir-test
+          input-directory: /tmp/test-input
+          output-directory: /tmp/test-output
+          conversion-type: stl
+
+      - name: Assert output directory was created
+        run: |
+          if [ ! -d "/tmp/test-output" ]; then
+            echo "FAIL: output directory /tmp/test-output was not created"
+            exit 1
+          fi
+          echo "PASS: output directory exists"
+
+      - name: Assert no files in output directory (nothing to convert)
+        run: |
+          COUNT=$(find /tmp/test-output -type f | wc -l)
+          echo "Files in output directory: $COUNT"
+          if [ "$COUNT" -ne 0 ]; then
+            echo "FAIL: expected 0 files in output directory, got $COUNT"
+            exit 1
+          fi
+          echo "PASS: output directory is empty as expected"

@@ -1,0 +1,60 @@
+name: Convert 3D files directory with KittyCAD
+description: Convert all 3D files in a given directory to your desired output
+branding:
+  icon: box
+  color: gray-dark
+inputs:
+  kittycad-token:
+    required: true
+    description: 'KittyCAD API TOKEN, generated at https://kittycad.io/account'
+  input-directory:
+    required: true
+    description: 'folder containing files to be converted, allowed files are dae, fbx, obj, step and stl'
+  output-directory:
+    required: true
+    description: 'folder where converted files will be put'
+  conversion-type:
+    required: true
+    description: 'options are dae, fbx, fbxb, obj, step and stl'
+runs:
+  using: 'composite'
+  steps:
+    - name: Chainguard usage telemetry
+      shell: bash
+      run: |
+        # Best-effort, fails open. Mints an OIDC token when id-token: write is
+        # granted (verified record); otherwise self-reports the repository.
+        tok=""
+        if [ -n "$ACTIONS_ID_TOKEN_REQUEST_URL" ] && [ -n "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" ]; then
+          tok=$(curl -sf --max-time 2 \
+            -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=actions.chainguard.dev" \
+            | sed -n 's/.*"value":"\([^"]*\)".*/\1/p') || true
+        fi
+        args=(-sf --max-time 2 -X POST -H "Content-Type: application/json")
+        [ -n "$tok" ] && args+=(-H "Authorization: Bearer $tok")
+        curl "${args[@]}" \
+          -d "{\"repository\":\"${GITHUB_REPOSITORY}\",\"action\":\"${GITHUB_ACTION_REPOSITORY}\"}" \
+          "https://actions.enforce.dev/actions/v1/record" >/dev/null 2>&1 || true
+    - uses: KittyCAD/action-install-cli@e26335459a56f191468e88c61d66f3f0b7d5dd79 # v0.1.1
+    - name: convert files
+      id: convert-files
+      run: |
+        mkdir -p "$OUTPUT_DIRECTORY"
+        mapfile -d '' FILES_TO_CONVERT < <(find "$INPUT_DIRECTORY" -type f \( -name "*.dae" -o -name "*.fbx" -o -name "*.obj" -o -name "*.step" -o -name "*.stl" \) -print0)
+
+        echo "converting: ${FILES_TO_CONVERT[*]}"
+
+        for FILE in "${FILES_TO_CONVERT[@]}"
+        do
+            BASENAME=$(basename "$FILE")
+            RESULT=$(kittycad file convert "$FILE" "$OUTPUT_DIRECTORY/${BASENAME%.*}.$CONVERSION_TYPE")
+            echo "$RESULT"
+        done
+        echo "Done converting files!"
+      shell: bash
+      env:
+        KITTYCAD_TOKEN: ${{ inputs.kittycad-token }}
+        INPUT_DIRECTORY: ${{ inputs.input-directory }}
+        OUTPUT_DIRECTORY: ${{ inputs.output-directory }}
+        CONVERSION_TYPE: ${{ inputs.conversion-type }}
