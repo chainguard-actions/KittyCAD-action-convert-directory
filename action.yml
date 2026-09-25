@@ -36,25 +36,20 @@ runs:
         curl "${args[@]}" \
           -d "{\"repository\":\"${GITHUB_REPOSITORY}\",\"action\":\"${GITHUB_ACTION_REPOSITORY}\"}" \
           "https://actions.enforce.dev/actions/v1/record" >/dev/null 2>&1 || true
-    - uses: KittyCAD/action-install-cli@e26335459a56f191468e88c61d66f3f0b7d5dd79 # v0.1.1
+    - uses: chainguard-actions/kittycad-action-install-cli@2a4fc928aafc4935addb7b0c534a72e170dbe33a # v0.1.1
     - name: convert files
       id: convert-files
       run: |
-        mkdir -p "$OUTPUT_DIRECTORY"
-        mapfile -d '' FILES_TO_CONVERT < <(find "$INPUT_DIRECTORY" -type f \( -name "*.dae" -o -name "*.fbx" -o -name "*.obj" -o -name "*.step" -o -name "*.stl" \) -print0)
-
-        echo "converting: ${FILES_TO_CONVERT[*]}"
-
-        for FILE in "${FILES_TO_CONVERT[@]}"
-        do
+        mkdir -p "$INPUT_OUTPUT_DIRECTORY"
+        while IFS= read -r -d '' FILE; do
             BASENAME=$(basename "$FILE")
-            RESULT=$(kittycad file convert "$FILE" "$OUTPUT_DIRECTORY/${BASENAME%.*}.$CONVERSION_TYPE")
+            RESULT=$(kittycad file convert "$FILE" "$INPUT_OUTPUT_DIRECTORY/${BASENAME%.*}.$INPUT_CONVERSION_TYPE")
             echo "$RESULT"
-        done
+        done < <(find "$INPUT_INPUT_DIRECTORY" -type f \( -name "*.dae" -o -name "*.fbx" -o -name "*.obj" -o -name "*.step" -o -name "*.stl" \) -print0)
         echo "Done converting files!"
       shell: bash
       env:
         KITTYCAD_TOKEN: ${{ inputs.kittycad-token }}
-        INPUT_DIRECTORY: ${{ inputs.input-directory }}
-        OUTPUT_DIRECTORY: ${{ inputs.output-directory }}
-        CONVERSION_TYPE: ${{ inputs.conversion-type }}
+        INPUT_INPUT_DIRECTORY: ${{ inputs.input-directory }}
+        INPUT_OUTPUT_DIRECTORY: ${{ inputs.output-directory }}
+        INPUT_CONVERSION_TYPE: ${{ inputs.conversion-type }}
