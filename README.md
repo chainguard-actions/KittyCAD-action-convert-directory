@@ -6,9 +6,9 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 
 ## Versions
 
-| Version | Tag | Upstream commit |
-|---------|-----|-----------------|
-| v0.0.2 | [`v0.0.2`](https://github.com/chainguard-actions/KittyCAD-action-convert-directory/tree/v0.0.2) | [`94f695e`](https://github.com/KittyCAD/action-convert-directory/commit/94f695ed3d7206d1a5f065eb9166ef318b68a3a6) |
+| Version | Tag | Upstream commit | Hardening report |
+|---------|-----|-----------------|------------------|
+| v0.0.2 | [`v0.0.2`](https://github.com/chainguard-actions/KittyCAD-action-convert-directory/tree/v0.0.2) | [`94f695e`](https://github.com/KittyCAD/action-convert-directory/commit/94f695ed3d7206d1a5f065eb9166ef318b68a3a6) | [`HARDENING.md`](https://github.com/chainguard-actions/KittyCAD-action-convert-directory/blob/v0.0.2/HARDENING.md) |
 
 ## Privacy
 
